@@ -3,14 +3,6 @@ let sceneIndex = 0;
 let sceneCount = 2;
 
 let canvas;
-let mgr;
-let previousX,
-	previousY = 0;
-
-let phase = 0;
-let xoff = 1;
-let yoff = 1;
-let zoff = 1;
 
 const PARTS = [
 	['nose', 0],
@@ -136,9 +128,22 @@ function softShape() {
 	remapAnchorsFromPose(pose);
 
 	expanded = [];
-	anchors.forEach(a => {
-		expanded = expanded.concat(a.blobify());
-	});
+	// anchors.forEach(a => {
+	// 	expanded = expanded.concat(a.blobify());
+	// });
+	expanded = expanded.concat(anchors[0].blobify());
+	expanded = expanded.concat(anchors[5].blobify());
+	expanded = expanded.concat(anchors[6].blobify());
+	expanded = expanded.concat(anchors[7].blobify());
+	expanded = expanded.concat(anchors[8].blobify());
+	expanded = expanded.concat(anchors[9].blobify());
+	expanded = expanded.concat(anchors[10].blobify());
+	expanded = expanded.concat(anchors[11].blobify());
+	expanded = expanded.concat(anchors[12].blobify());
+	expanded = expanded.concat(anchors[13].blobify());
+	expanded = expanded.concat(anchors[14].blobify());
+	expanded = expanded.concat(anchors[15].blobify());
+	expanded = expanded.concat(anchors[16].blobify());
 
 	let hullSet = hull(expanded, par.softConcavity);
 
@@ -178,181 +183,6 @@ function softShape() {
 	}
 }
 
-function noiseLoops() {
-	background('white');
-	let i = frameCount % recordedPose.length;
-	let pose = recordedPose[i].pose.keypoints;
-
-	let po = {
-		position: {
-			x: width / 2,
-			y: height / 2,
-		},
-	};
-
-	let expanded = expandBlob(po);
-	sorted = [...expanded];
-	sorted.sort();
-	let hullSet = hull(expanded, par.softConcavity);
-
-	// Looks better than endShape(CLOSE)
-	hullSet.push(hullSet[1]);
-	hullSet.push(hullSet[0]);
-
-	// Draw lattice
-	// stroke(100);
-	// strokeWeight(0.3);
-	// beginShape();
-	// expanded.forEach((p, i) => {
-	// 	vertex(p[0], p[1]);
-	// });
-	// endShape();
-
-	// // Draw outline
-	// stroke('lightsalmon');
-	// strokeWeight(.4);
-	// noFill();
-	// beginShape();
-	// sorted.forEach((p, i) => {
-	// 	vertex(p[0], p[1]);
-	// });
-	// endShape();
-
-	// Draw hull outline
-	stroke('indigo');
-	strokeWeight(4);
-	noFill();
-	beginShape();
-	hullSet.forEach((p, i) => {
-		// text(i,p[0],p[1])
-		curveVertex(p[0], p[1]);
-	});
-	endShape();
-
-	// Draw lattice points
-	stroke('magenta');
-	expanded.forEach(p => {
-		point(p[0], p[1]);
-	});
-}
-
-function posenetWithAnchors() {
-	background('white');
-	let i = frameCount % recordedPose.length;
-	let pose = recordedPose[i].pose.keypoints;
-
-	remapAnchorsFromPose(pose);
-
-	noStroke();
-	fill('red');
-	// drawHeadFromAnchors(anchors, 6);
-
-	stroke('blue');
-	// drawSkeletonFromAnchors(anchors);
-}
-
-function posenetBasic() {
-	background('white');
-	let i = frameCount % recordedPose.length;
-	let pose = recordedPose[i].pose.keypoints;
-	let skeleton = recordedPose[i].skeleton;
-	remapHead(pose);
-	remapSkeleton(skeleton);
-}
-
-function pointCloud() {
-	push();
-	// translate(width / 2, height / 2);
-
-	let poseIndex = frameCount % recordedPose.length;
-	let skeleton = recordedPose[poseIndex].skeleton;
-
-	recordedPose.forEach(rp => {
-		let pose = rp.pose.keypoints;
-		pose.forEach(p => {
-			let [x, y] = remapPosenetPoint(p);
-			point(x, y);
-		});
-	});
-
-	// pose.forEach((p, i) => {
-	// 	let newX = p.position.x;
-	// 	let newY = p.position.y;
-	// 	// 1280 + 720 = 2000 (why is this hard-coded?)
-	// 	let a = map(poseIndex, 0, recordedPose.length, 0, width);
-	// 	let r = map(newY, 0, 720, 0, height / 1.5);
-	// 	let x = r * sin(a);
-	// 	let y = r * cos(a);
-	// 	colorMode(HSB, pose.length);
-	// 	strokeWeight(2);
-	// 	stroke(i, i, i);
-	// 	point(x, y);
-	// });
-
-	pop();
-}
-
-function circleGraph() {
-	push();
-	translate(width / 2, height / 2);
-
-	let poseIndex = frameCount % recordedPose.length;
-	let skeleton = recordedPose[poseIndex].skeleton;
-
-	recordedPose.forEach(rp => {
-		let pose = rp.pose.keypoints;
-		pose.forEach(p => {
-			let [x, y] = remapPosenetPoint(p);
-			point(x, y);
-			// let newX = p.position.x;
-			// let newY = p.position.y;
-			// 1280 + 720 = 2000 (why is this hard-coded?)
-			// let a = map(poseIndex, 0, recordedPose.length, 0, width);
-			// let r = map(newY, 0, 720, 0, height / 1.5);
-			// let x = r * sin(a);
-			// let y = r * cos(a);
-			// colorMode(HSB, pose.length);
-			// strokeWeight(2);
-			// stroke(i, i, i);
-			// point(x, y);
-		});
-	});
-
-	pop();
-	// frameRate(1)
-}
-
-function lineGraph() {
-	noStroke();
-	let poseIndex = frameCount % recordedPose.length;
-	let pose = recordedPose[poseIndex].pose.keypoints;
-	let skeleton = recordedPose[poseIndex].skeleton;
-
-	strokeWeight(1.5);
-	pose.forEach((p, i) => {
-		let newX = p.position.x;
-		let newY = p.position.y;
-		// 1280 + 720 = 2000 (why is this hard-coded?)
-		let x = map(poseIndex, 0, recordedPose.length, 0, width);
-		let y = map(newY, 0, 720, 0, height);
-		stroke(i * 10);
-		point(x, y);
-	});
-}
-
-function graphNose() {
-	beginShape();
-	recordedPose.forEach((p, i) => {
-		let px = p.pose.leftWrist.x;
-		let py = p.pose.leftWrist.y;
-		// 1280 + 720 = 2000 (why is this hard-coded?)
-		let x = map(i, 0, recordedPose.length, 0, width);
-		let y = map(py, 0, 720, 0, height);
-		vertex(x, y);
-	});
-	endShape();
-}
-
 function remapHead(pose) {
 	pose.forEach(p => {
 		if (p.part === 'nose' || p.part === 'leftEye' || p.part === 'rightEye') {
@@ -382,14 +212,6 @@ function remapPosenetPoint(p) {
 	return [nX, nY];
 }
 
-function refreshAnchors() {
-	anchors.forEach(a => {
-		a.behaviors();
-		a.update();
-		if (par.drawAnchors) a.show();
-	});
-}
-
 function remapAnchorsFromPose(pose) {
 	anchors.forEach((a, i) => {
 		if (pose[i]) {
@@ -405,48 +227,4 @@ function remapAnchorsFromPose(pose) {
 		a.update();
 		if (par.drawAnchors) a.show();
 	});
-}
-
-function retargetAnchorsFromPose(pose) {
-	anchors.forEach((a, i) => {
-		if (pose[i]) {
-			let v = createVector(pose[i].position.x, pose[i].position.y);
-			a.setTarget(v);
-		} else {
-			let v = createVector(pose[0].position.x, pose[0].position.y);
-			a.setTarget(v);
-		}
-		a.behaviors();
-		a.update();
-		if (par.drawAnchors) a.show();
-	});
-}
-
-function expandBlob(point, modifier = 1) {
-	let px = point.position.x;
-	let py = point.position.y;
-	let x, y;
-	let newArr = [];
-
-	for (let a = 0; a < 360; a += par.angles) {
-		let xoff = map(cos(a + phase / modifier), -1, 1, 0, par.maxY / modifier);
-		let yoff = map(sin(a + phase / modifier), -1, 1, 0, par.maxX / modifier);
-		noiseDetail(par.noiseOctaves, par.noiseFalloff);
-		let n = noise(xoff, yoff, zoff);
-
-		let r = map(n, 0, 1, par.minRadius / modifier, par.maxRadius / modifier);
-
-		x = px + r * cos(a);
-		y = py + r * sin(a);
-
-		newArr.push([x, y]);
-	}
-	return newArr;
-}
-
-function topExpression(unsorted) {
-	let sorted = [];
-	sorted = Object.entries(unsorted);
-	sorted.sort((a, b) => b[1] - a[1]);
-	return sorted[0][0];
 }

@@ -125,10 +125,10 @@ class Anchor {
 		let halfAngle = angle / 2.0;
 		for (let a = 0; a < TWO_PI; a += angle) {
 			noiseSeed(this.seed2)
-			let sx = map(noise(this.starXOff, this.starYOff), 0, 1, -10, 10) + x + cos(a) * radius2;
+			let sx = map(noise(this.starXOff, this.starYOff), 0, 1, -5, 5) + x + cos(a) * radius2;
 			this.starXOff += offStep;
 			noiseSeed(this.seed3)
-			let sy = map(noise(xoff, yoff), 0, 1, -10, 10) + y + sin(a) * radius2;
+			let sy = map(noise(this.starXOff, this.starYOff), 0, 1, -5, 5) + y + sin(a) * radius2;
 			this.starYOff += offStep;
 			newArr.push([sx, sy]);
 			sx = x + cos(a + halfAngle) * radius1;
