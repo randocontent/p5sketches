@@ -1,6 +1,9 @@
+// ;;scenes
+let sceneIndex = 0;
+let sceneCount = 2;
+
 let canvas;
 let mgr;
-let button;
 let previousX,
 	previousY = 0;
 
@@ -44,21 +47,12 @@ const SKELETON = [
 	[11, 12],
 ];
 
-// ;;scenes
 const anchors = [];
-let sceneIndex = 6;
-let sceneCount = 7;
 
 function setup() {
 	canvas = createCanvas(windowWidth, windowHeight);
 	PARTS.forEach(p => {
 		anchors.push(new Anchor(width / 2, height / 2, p));
-	});
-	button = createButton('');
-	button.size(300);
-	button.position(width / 2 - 150, 30);
-	button.mousePressed(() => {
-		sceneIndex++;
 	});
 }
 
@@ -66,80 +60,45 @@ function setup() {
 function draw() {
 	switch (sceneIndex % sceneCount) {
 		case 0:
-			posenetBasic();
+			softShape();
 			break;
 		case 1:
-			lineGraph();
-			break;
-		case 2:
-			circleGraph();
-			break;
-		case 3:
-			pointCloud();
-			break;
-		case 4:
-			posenetWithAnchors();
-			break;
-		case 5:
-			noiseLoops();
-			break;
-		case 6:
-			posenetWithNoiseLoop();
+			sharpShape();
 		default:
 			break;
 	}
 }
+function mousePressed() {
+	sceneIndex++;
+}
 
-function posenetWithNoiseLoop() {
+function sharpShape() {
 	background('white');
-	button.html('Posenet with Noise Loops');
 	let i = frameCount % recordedPose.length;
 	let pose = recordedPose[i].pose.keypoints;
 	let skeleton = recordedPose[i].skeleton;
 	remapAnchorsFromPose(pose);
 
 	expanded = [];
-	expanded = expanded.concat(expandBlob(anchors[0]));
-	expanded = expanded.concat(expandBlob(anchors[5]));
-	expanded = expanded.concat(expandBlob(anchors[6]));
-	expanded = expanded.concat(expandBlob(anchors[7]));
-	expanded = expanded.concat(expandBlob(anchors[8]));
-	expanded = expanded.concat(expandBlob(anchors[11]));
-	expanded = expanded.concat(expandBlob(anchors[12]));
-	expanded = expanded.concat(expandBlob(anchors[13]));
-	expanded = expanded.concat(expandBlob(anchors[14]));
-	expanded = expanded.concat(expandBlob(anchors[15]));
-	expanded = expanded.concat(expandBlob(anchors[16]));
-	expanded = expanded.concat(expandBlob(anchors[9]));
-	expanded = expanded.concat(expandBlob(anchors[10]));
-	
-	sorted = [...expanded];
-	sorted.sort();
-	let hullSet = hull(expanded, par.concavity);
+	expanded = expanded.concat(anchors[0].starify());
+	expanded = expanded.concat(anchors[5].starify());
+	expanded = expanded.concat(anchors[6].starify());
+	expanded = expanded.concat(anchors[7].starify());
+	expanded = expanded.concat(anchors[8].starify());
+	expanded = expanded.concat(anchors[9].starify());
+	expanded = expanded.concat(anchors[10].starify());
+	expanded = expanded.concat(anchors[11].starify());
+	expanded = expanded.concat(anchors[12].starify());
+	expanded = expanded.concat(anchors[13].starify());
+	expanded = expanded.concat(anchors[14].starify());
+	expanded = expanded.concat(anchors[15].starify());
+	expanded = expanded.concat(anchors[16].starify());
+
+	let hullSet = hull(expanded, par.sharpConcavity);
 
 	// Looks better than endShape(CLOSE)
 	hullSet.push(hullSet[1]);
 	hullSet.push(hullSet[0]);
-
-	// Draw lattice
-	// stroke(100);
-	// strokeWeight(0.3);
-	// noFill()
-	// beginShape();
-	// expanded.forEach((p, i) => {
-	// 	vertex(p[0], p[1]);
-	// });
-	// endShape();
-
-	// // Draw outline
-	// stroke('lightsalmon');
-	// strokeWeight(.4);
-	// noFill();
-	// beginShape();
-	// sorted.forEach((p, i) => {
-	// 	vertex(p[0], p[1]);
-	// });
-	// endShape();
 
 	// Draw hull outline
 	stroke(0);
@@ -147,42 +106,80 @@ function posenetWithNoiseLoop() {
 	noFill();
 	beginShape();
 	hullSet.forEach((p, i) => {
-		if (par.drawCurves){
-			curveVertex(p[0], p[1]);
-
-		}  else {
-
-			vertex(p[0], p[1]);
-		}
-
-		// text(i,p[0],p[1])
+		vertex(p[0], p[1]);
 	});
 	endShape();
 
 	if (par.drawSkeleton) {
-		stroke('blue')
-		strokeWeight(1)
+		stroke('blue');
+		strokeWeight(1);
 		remapSkeleton(skeleton);
-		noStroke()
-		fill('red')
-		remapHead(pose)
+		noStroke();
+		fill('red');
+		remapHead(pose);
 	}
 
-	// Draw lattice points
 	if (par.drawExpandedBodyPoints) {
 		stroke('cyan');
-		strokeWeight(3)
+		strokeWeight(3);
 		expanded.forEach(p => {
 			point(p[0], p[1]);
 		});
 	}
-	phase += par.maxPhaseShift;
-	zoff += par.maxZOff;
+}
+
+function softShape() {
+	background('white');
+	let i = frameCount % recordedPose.length;
+	let pose = recordedPose[i].pose.keypoints;
+	let skeleton = recordedPose[i].skeleton;
+	remapAnchorsFromPose(pose);
+
+	expanded = [];
+	anchors.forEach(a => {
+		expanded = expanded.concat(a.blobify());
+	});
+
+	let hullSet = hull(expanded, par.softConcavity);
+
+	// Looks better than endShape(CLOSE)
+	hullSet.push(hullSet[1]);
+	hullSet.push(hullSet[0]);
+
+	// Draw hull outline
+	stroke(0);
+	strokeWeight(4);
+	noFill();
+	beginShape();
+	hullSet.forEach((p, i) => {
+		if (par.drawCurves) {
+			curveVertex(p[0], p[1]);
+		} else {
+			vertex(p[0], p[1]);
+		}
+	});
+	endShape();
+
+	if (par.drawSkeleton) {
+		stroke('blue');
+		strokeWeight(1);
+		remapSkeleton(skeleton);
+		noStroke();
+		fill('red');
+		remapHead(pose);
+	}
+
+	if (par.drawExpandedBodyPoints) {
+		stroke('cyan');
+		strokeWeight(3);
+		expanded.forEach(p => {
+			point(p[0], p[1]);
+		});
+	}
 }
 
 function noiseLoops() {
 	background('white');
-	button.html('Noise Loops');
 	let i = frameCount % recordedPose.length;
 	let pose = recordedPose[i].pose.keypoints;
 
@@ -196,7 +193,7 @@ function noiseLoops() {
 	let expanded = expandBlob(po);
 	sorted = [...expanded];
 	sorted.sort();
-	let hullSet = hull(expanded, par.concavity);
+	let hullSet = hull(expanded, par.softConcavity);
 
 	// Looks better than endShape(CLOSE)
 	hullSet.push(hullSet[1]);
@@ -241,7 +238,6 @@ function noiseLoops() {
 
 function posenetWithAnchors() {
 	background('white');
-	button.html('Posenet With Physics');
 	let i = frameCount % recordedPose.length;
 	let pose = recordedPose[i].pose.keypoints;
 
@@ -257,7 +253,6 @@ function posenetWithAnchors() {
 
 function posenetBasic() {
 	background('white');
-	button.html('Posenet Recording');
 	let i = frameCount % recordedPose.length;
 	let pose = recordedPose[i].pose.keypoints;
 	let skeleton = recordedPose[i].skeleton;
@@ -266,7 +261,6 @@ function posenetBasic() {
 }
 
 function pointCloud() {
-	button.html('Point Cloud');
 	push();
 	// translate(width / 2, height / 2);
 
@@ -299,7 +293,6 @@ function pointCloud() {
 }
 
 function circleGraph() {
-	button.html('Circle graph');
 	push();
 	translate(width / 2, height / 2);
 
@@ -330,7 +323,6 @@ function circleGraph() {
 }
 
 function lineGraph() {
-	button.html('Line Graph');
 	noStroke();
 	let poseIndex = frameCount % recordedPose.length;
 	let pose = recordedPose[poseIndex].pose.keypoints;
@@ -430,7 +422,7 @@ function retargetAnchorsFromPose(pose) {
 	});
 }
 
-function expandBlob(point, modifier=1) {
+function expandBlob(point, modifier = 1) {
 	let px = point.position.x;
 	let py = point.position.y;
 	let x, y;
@@ -439,7 +431,7 @@ function expandBlob(point, modifier=1) {
 	for (let a = 0; a < 360; a += par.angles) {
 		let xoff = map(cos(a + phase / modifier), -1, 1, 0, par.maxY / modifier);
 		let yoff = map(sin(a + phase / modifier), -1, 1, 0, par.maxX / modifier);
-
+		noiseDetail(par.noiseOctaves, par.noiseFalloff);
 		let n = noise(xoff, yoff, zoff);
 
 		let r = map(n, 0, 1, par.minRadius / modifier, par.maxRadius / modifier);

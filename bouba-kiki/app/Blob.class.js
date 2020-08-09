@@ -1,4 +1,4 @@
-class Anchor {
+class Blob {
 	constructor(x, y, part) {
 		this.position = createVector(x, y);
 		this.target = createVector(x, y);
@@ -8,11 +8,7 @@ class Anchor {
 		this.part = part;
 		this.zoff = 0.0;
 		this.phase = 0.0;
-		this.starXOff = 0.0;
-		this.starYOff = 0.0;
-		this.seed1 = random(1000);
-		this.seed2 = random(1000);
-		this.seed3 = random(1000)
+		this.seed = random(1000);
 		this.topSpeed = par.topSpeed;
 		this.maxAcc = par.maxAcc;
 	}
@@ -84,7 +80,7 @@ class Anchor {
 		return steer.limit(par.maxAcc);
 	}
 
-	blobify() {
+	expandBlob() {
 		let px = this.position.x;
 		let py = this.position.y;
 		let x, y;
@@ -94,7 +90,7 @@ class Anchor {
 			let xoff = map(cos(a + this.phase), -1, 1, 0, par.maxY);
 			let yoff = map(sin(a + this.phase), -1, 1, 0, par.maxX);
 
-			noiseSeed(this.seed1);
+			noiseSeed(this.seed);
 			let n = noise(xoff, yoff, this.zoff);
 
 			let r = map(n, 0, 1, par.minRadius, par.maxRadius);
@@ -103,39 +99,10 @@ class Anchor {
 			y = py + r * sin(a);
 
 			newArr.push([x, y]);
+
 		}
 		this.phase += par.maxPhaseShift;
 		this.zoff = par.maxZOff;
-		return newArr;
-	}
-
-	starify() {
-		let x = this.position.x;
-		let y = this.position.y;
-		let newArr = [];
-
-		let offStep = 0.01;
-		let radius1 = par.internalRadius
-		let radius2 = par.externalRadius
-		let npoints = par.starPoints
-
-		push();
-		angleMode(RADIANS);
-		let angle = TWO_PI / npoints;
-		let halfAngle = angle / 2.0;
-		for (let a = 0; a < TWO_PI; a += angle) {
-			noiseSeed(this.seed2)
-			let sx = map(noise(this.starXOff, this.starYOff), 0, 1, -10, 10) + x + cos(a) * radius2;
-			this.starXOff += offStep;
-			noiseSeed(this.seed3)
-			let sy = map(noise(xoff, yoff), 0, 1, -10, 10) + y + sin(a) * radius2;
-			this.starYOff += offStep;
-			newArr.push([sx, sy]);
-			sx = x + cos(a + halfAngle) * radius1;
-			sy = y + sin(a + halfAngle) * radius1;
-			newArr.push([sx, sy]);
-		}
-		pop();
 		return newArr;
 	}
 }

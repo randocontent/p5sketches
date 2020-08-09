@@ -16,17 +16,22 @@ class Paramaterize {
 		// this.concavity = 600
 		this.topSpeed = 20;
 		this.maxAcc = 10;
-		this.angles = 36;
-		this.minRadius = 50;
-		this.maxRadius = 100;
-		this.maxX = 5;
-		this.maxY = 5;
-		this.phase = 0.1;
+		this.angles = 18;
+		this.minRadius = 10;
+		this.maxRadius = 150;
+		this.maxX = 8;
+		this.maxY = 8;
 		this.effect = 1
 		this.radius = 500;
-		this.maxZOff = 0.001
-		this.maxPhaseShift = 0.001
-		this.concavity = 120
+		this.maxZOff = 0.005
+		this.maxPhaseShift = 0.008
+		this.softConcavity = 100
+		this.sharpConcavity = 80
+		this.noiseOctaves = 8
+		this.noiseFalloff = .65	
+		this.starPoints = 8	
+		this.internalRadius = 70
+		this.externalRadius = 110	
 		this.drawAnchors = false;
 		this.drawExpandedBodyPoints = false
 		this.drawSkeleton = true
@@ -46,10 +51,16 @@ gui.add(par, 'maxX');
 gui.add(par, 'maxY');
 gui.add(par, 'maxZOff');
 gui.add(par, 'maxPhaseShift');
-gui.add(par, 'concavity');
+gui.add(par, 'softConcavity');
+gui.add(par, 'sharpConcavity');
+gui.add(par, 'noiseOctaves');
+gui.add(par, 'noiseFalloff');
+gui.add(par, 'starPoints');
+gui.add(par, 'internalRadius');
+gui.add(par, 'externalRadius');
 gui.add(par, 'drawAnchors');
 gui.add(par, 'drawExpandedBodyPoints');
 gui.add(par, 'drawSkeleton');
 gui.add(par, 'drawCurves');
 
-gui.open()
+gui.hide()
