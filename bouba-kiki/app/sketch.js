@@ -1,179 +1,351 @@
-// --
-
 let canvas;
 let mgr;
 let button;
 let previousX,
 	previousY = 0;
 
+let phase = 0;
+let xoff = 1;
+let yoff = 1;
+let zoff = 1;
+
 const PARTS = [
-	'nose',
-	'leftEye',
-	'rightEye',
-	'leftEar',
-	'rightEar',
-	'leftShoulder',
-	'rightShoulder',
-	'leftElbow',
-	'rightElbow',
-	'leftWrist',
-	'rightWrist',
-	'leftHip',
-	'rightHip',
-	'leftKnee',
-	'rightKnee',
-	'leftAnkle',
-	'rightAnkle',
+	['nose', 0],
+	['leftEye', 1],
+	['rightEye', 2],
+	['leftEar', 3],
+	['rightEar', 4],
+	['leftShoulder', 5],
+	['rightShoulder', 6],
+	['leftElbow', 7],
+	['rightElbow', 8],
+	['leftWrist', 9],
+	['rightWrist', 10],
+	['leftHip', 11],
+	['rightHip', 12],
+	['leftKnee', 13],
+	['rightKnee', 14],
+	['leftAnkle', 15],
+	['rightAnkle', 16],
 ];
 
 const SKELETON = [
-	['leftHip', 'leftShoulder'],
-	['leftElbow', 'leftShoulder'],
-	['leftElbow', 'leftWrist'],
-	['leftHip', 'leftKnee'],
-	['leftKnee', 'leftAnkle'],
-	['rightHip', 'rightShoulder'],
-	['rightElbow', 'rightShoulder'],
-	['rightElbow', 'rightWrist'],
-	['rightHip', 'rightKnee'],
-	['rightKnee', 'rightAnkle'],
-	['leftShoulder', 'rightShoulder'],
-	['leftHip', 'rightHip'],
+	[11, 5],
+	[7, 5],
+	[7, 9],
+	[11, 13],
+	[13, 15],
+	[12, 6],
+	[8, 6],
+	[8, 10],
+	[12, 14],
+	[14, 16],
+	[5, 6],
+	[11, 12],
 ];
 
+// ;;scenes
 const anchors = [];
+let sceneIndex = 6;
+let sceneCount = 7;
 
 function setup() {
 	canvas = createCanvas(windowWidth, windowHeight);
-	for (let i = 0; i < 17; i++) {
-		anchors.push(new Anchor(width / 2, height / 2));
-	}
-	button = createButton();
+	PARTS.forEach(p => {
+		anchors.push(new Anchor(width / 2, height / 2, p));
+	});
+	button = createButton('');
 	button.size(300);
 	button.position(width / 2 - 150, 30);
-	button.mousePressed = function () {
-		this.sceneManager.showNextScene();
-	};
-	mgr = new SceneManager();
-	mgr.addScene(PosenetWithAnchors);
-	mgr.addScene(PosenetBasic);
-	mgr.addScene(CircleGraph);
-	mgr.addScene(LineGraph);
-	mgr.showNextScene();
+	button.mousePressed(() => {
+		sceneIndex++;
+	});
 }
 
+// ;;scenes
 function draw() {
-	mgr.draw();
+	switch (sceneIndex % sceneCount) {
+		case 0:
+			posenetBasic();
+			break;
+		case 1:
+			lineGraph();
+			break;
+		case 2:
+			circleGraph();
+			break;
+		case 3:
+			pointCloud();
+			break;
+		case 4:
+			posenetWithAnchors();
+			break;
+		case 5:
+			noiseLoops();
+			break;
+		case 6:
+			posenetWithNoiseLoop();
+		default:
+			break;
+	}
 }
 
-function mousePressed() {
-	console.log('mousePressed');
-	mgr.handleEvent('mousePressed');
-}
+function posenetWithNoiseLoop() {
+	background('white');
+	button.html('Posenet with Noise Loops');
+	let i = frameCount % recordedPose.length;
+	let pose = recordedPose[i].pose.keypoints;
+	let skeleton = recordedPose[i].skeleton;
+	remapAnchorsFromPose(pose);
 
-function windowResized() {
-	resizeCanvas(windowWidth, windowHeight);
-}
+	expanded = [];
+	expanded = expanded.concat(expandBlob(anchors[0]));
+	expanded = expanded.concat(expandBlob(anchors[5]));
+	expanded = expanded.concat(expandBlob(anchors[6]));
+	expanded = expanded.concat(expandBlob(anchors[7]));
+	expanded = expanded.concat(expandBlob(anchors[8]));
+	expanded = expanded.concat(expandBlob(anchors[11]));
+	expanded = expanded.concat(expandBlob(anchors[12]));
+	expanded = expanded.concat(expandBlob(anchors[13]));
+	expanded = expanded.concat(expandBlob(anchors[14]));
+	expanded = expanded.concat(expandBlob(anchors[15]));
+	expanded = expanded.concat(expandBlob(anchors[16]));
+	expanded = expanded.concat(expandBlob(anchors[9]));
+	expanded = expanded.concat(expandBlob(anchors[10]));
+	
+	sorted = [...expanded];
+	sorted.sort();
+	let hullSet = hull(expanded, par.concavity);
 
-function PosenetWithAnchors() {
-	this.enter = function () {
-		console.log("Scene 'PosenetWithAnchors'");
-		background(255);
-	};
-	this.draw = function () {
-		background('white');
-		button.html('Posenet With Physics');
-		let i = frameCount % recordedPose.length;
-		let pose = recordedPose[i].pose.keypoints;
-		let skeleton = recordedPose[i].skeleton;
-		stroke('mistyrose');
-		remapHead(pose);
-		stroke('lightblue')
+	// Looks better than endShape(CLOSE)
+	hullSet.push(hullSet[1]);
+	hullSet.push(hullSet[0]);
+
+	// Draw lattice
+	// stroke(100);
+	// strokeWeight(0.3);
+	// noFill()
+	// beginShape();
+	// expanded.forEach((p, i) => {
+	// 	vertex(p[0], p[1]);
+	// });
+	// endShape();
+
+	// // Draw outline
+	// stroke('lightsalmon');
+	// strokeWeight(.4);
+	// noFill();
+	// beginShape();
+	// sorted.forEach((p, i) => {
+	// 	vertex(p[0], p[1]);
+	// });
+	// endShape();
+
+	// Draw hull outline
+	stroke(0);
+	strokeWeight(4);
+	noFill();
+	beginShape();
+	hullSet.forEach((p, i) => {
+		if (par.drawCurves){
+			curveVertex(p[0], p[1]);
+
+		}  else {
+
+			vertex(p[0], p[1]);
+		}
+
+		// text(i,p[0],p[1])
+	});
+	endShape();
+
+	if (par.drawSkeleton) {
+		stroke('blue')
+		strokeWeight(1)
 		remapSkeleton(skeleton);
-		remapAnchorsFromPose(pose);
-		// refreshAnchors();
-	};
+		noStroke()
+		fill('red')
+		remapHead(pose)
+	}
+
+	// Draw lattice points
+	if (par.drawExpandedBodyPoints) {
+		stroke('cyan');
+		strokeWeight(3)
+		expanded.forEach(p => {
+			point(p[0], p[1]);
+		});
+	}
+	phase += par.maxPhaseShift;
+	zoff += par.maxZOff;
 }
 
-function PosenetBasic() {
-	this.enter = function () {
-		console.log("Scene 'PosenetBasic'");
-		background(255);
+function noiseLoops() {
+	background('white');
+	button.html('Noise Loops');
+	let i = frameCount % recordedPose.length;
+	let pose = recordedPose[i].pose.keypoints;
+
+	let po = {
+		position: {
+			x: width / 2,
+			y: height / 2,
+		},
 	};
-	this.draw = function () {
-		background('white');
-		button.html('Posenet Recording');
-		let i = frameCount % recordedPose.length;
-		let pose = recordedPose[i].pose.keypoints;
-		let skeleton = recordedPose[i].skeleton;
-		remapHead(pose);
-		remapSkeleton(skeleton);
-	};
-	this.mousePressed = function () {
-		this.sceneManager.showNextScene();
-	};
+
+	let expanded = expandBlob(po);
+	sorted = [...expanded];
+	sorted.sort();
+	let hullSet = hull(expanded, par.concavity);
+
+	// Looks better than endShape(CLOSE)
+	hullSet.push(hullSet[1]);
+	hullSet.push(hullSet[0]);
+
+	// Draw lattice
+	// stroke(100);
+	// strokeWeight(0.3);
+	// beginShape();
+	// expanded.forEach((p, i) => {
+	// 	vertex(p[0], p[1]);
+	// });
+	// endShape();
+
+	// // Draw outline
+	// stroke('lightsalmon');
+	// strokeWeight(.4);
+	// noFill();
+	// beginShape();
+	// sorted.forEach((p, i) => {
+	// 	vertex(p[0], p[1]);
+	// });
+	// endShape();
+
+	// Draw hull outline
+	stroke('indigo');
+	strokeWeight(4);
+	noFill();
+	beginShape();
+	hullSet.forEach((p, i) => {
+		// text(i,p[0],p[1])
+		curveVertex(p[0], p[1]);
+	});
+	endShape();
+
+	// Draw lattice points
+	stroke('magenta');
+	expanded.forEach(p => {
+		point(p[0], p[1]);
+	});
 }
 
-function CircleGraph() {
-	this.enter = function () {
-		console.log("Scene 'Graph01'");
-		background(255);
-		button.html('Circle Graph');
-	};
-	this.draw = function () {
-		push();
-		translate(width / 2, height / 2);
-		let poseIndex = frameCount % recordedPose.length;
-		let pose = recordedPose[poseIndex].pose.keypoints;
-		let skeleton = recordedPose[poseIndex].skeleton;
+function posenetWithAnchors() {
+	background('white');
+	button.html('Posenet With Physics');
+	let i = frameCount % recordedPose.length;
+	let pose = recordedPose[i].pose.keypoints;
 
-		pose.forEach((p, i) => {
-			let newX = p.position.x;
-			let newY = p.position.y;
-			// 1280 + 720 = 2000 (why is this hard-coded?)
-			let a = map(poseIndex, 0, recordedPose.length, 0, width);
-			let r = map(newY, 0, 720, 0, height / 1.5);
-			let x = r * sin(a);
-			let y = r * cos(a);
-			colorMode(HSB, pose.length);
-			strokeWeight(2);
-			stroke(i, i, i);
+	remapAnchorsFromPose(pose);
+
+	noStroke();
+	fill('red');
+	// drawHeadFromAnchors(anchors, 6);
+
+	stroke('blue');
+	// drawSkeletonFromAnchors(anchors);
+}
+
+function posenetBasic() {
+	background('white');
+	button.html('Posenet Recording');
+	let i = frameCount % recordedPose.length;
+	let pose = recordedPose[i].pose.keypoints;
+	let skeleton = recordedPose[i].skeleton;
+	remapHead(pose);
+	remapSkeleton(skeleton);
+}
+
+function pointCloud() {
+	button.html('Point Cloud');
+	push();
+	// translate(width / 2, height / 2);
+
+	let poseIndex = frameCount % recordedPose.length;
+	let skeleton = recordedPose[poseIndex].skeleton;
+
+	recordedPose.forEach(rp => {
+		let pose = rp.pose.keypoints;
+		pose.forEach(p => {
+			let [x, y] = remapPosenetPoint(p);
 			point(x, y);
 		});
-		pop();
-	};
-	this.mousePressed = function () {
-		this.sceneManager.showNextScene();
-	};
+	});
+
+	// pose.forEach((p, i) => {
+	// 	let newX = p.position.x;
+	// 	let newY = p.position.y;
+	// 	// 1280 + 720 = 2000 (why is this hard-coded?)
+	// 	let a = map(poseIndex, 0, recordedPose.length, 0, width);
+	// 	let r = map(newY, 0, 720, 0, height / 1.5);
+	// 	let x = r * sin(a);
+	// 	let y = r * cos(a);
+	// 	colorMode(HSB, pose.length);
+	// 	strokeWeight(2);
+	// 	stroke(i, i, i);
+	// 	point(x, y);
+	// });
+
+	pop();
 }
 
-function LineGraph() {
-	this.enter = function () {
-		console.log("Scene 'Graph01'");
-		background(255);
-		button.html('Line Graph');
-	};
-	this.draw = function () {
-		// background('white');
-		noStroke();
-		let poseIndex = frameCount % recordedPose.length;
-		let pose = recordedPose[poseIndex].pose.keypoints;
-		let skeleton = recordedPose[poseIndex].skeleton;
+function circleGraph() {
+	button.html('Circle graph');
+	push();
+	translate(width / 2, height / 2);
 
-		strokeWeight(1.5);
-		pose.forEach((p, i) => {
-			let newX = p.position.x;
-			let newY = p.position.y;
-			// 1280 + 720 = 2000 (why is this hard-coded?)
-			let x = map(poseIndex, 0, recordedPose.length, 0, width);
-			let y = map(newY, 0, 720, 0, height);
-			stroke(COLORS[i]);
+	let poseIndex = frameCount % recordedPose.length;
+	let skeleton = recordedPose[poseIndex].skeleton;
+
+	recordedPose.forEach(rp => {
+		let pose = rp.pose.keypoints;
+		pose.forEach(p => {
+			let [x, y] = remapPosenetPoint(p);
 			point(x, y);
+			// let newX = p.position.x;
+			// let newY = p.position.y;
+			// 1280 + 720 = 2000 (why is this hard-coded?)
+			// let a = map(poseIndex, 0, recordedPose.length, 0, width);
+			// let r = map(newY, 0, 720, 0, height / 1.5);
+			// let x = r * sin(a);
+			// let y = r * cos(a);
+			// colorMode(HSB, pose.length);
+			// strokeWeight(2);
+			// stroke(i, i, i);
+			// point(x, y);
 		});
-	};
-	this.mousePressed = function () {
-		this.sceneManager.showNextScene();
-	};
+	});
+
+	pop();
+	// frameRate(1)
+}
+
+function lineGraph() {
+	button.html('Line Graph');
+	noStroke();
+	let poseIndex = frameCount % recordedPose.length;
+	let pose = recordedPose[poseIndex].pose.keypoints;
+	let skeleton = recordedPose[poseIndex].skeleton;
+
+	strokeWeight(1.5);
+	pose.forEach((p, i) => {
+		let newX = p.position.x;
+		let newY = p.position.y;
+		// 1280 + 720 = 2000 (why is this hard-coded?)
+		let x = map(poseIndex, 0, recordedPose.length, 0, width);
+		let y = map(newY, 0, 720, 0, height);
+		stroke(i * 10);
+		point(x, y);
+	});
 }
 
 function graphNose() {
@@ -190,7 +362,6 @@ function graphNose() {
 }
 
 function remapHead(pose) {
-	noStroke();
 	pose.forEach(p => {
 		if (p.part === 'nose' || p.part === 'leftEye' || p.part === 'rightEye') {
 			let nX, nY;
@@ -223,7 +394,7 @@ function refreshAnchors() {
 	anchors.forEach(a => {
 		a.behaviors();
 		a.update();
-		if (par.showAnchors) a.show();
+		if (par.drawAnchors) a.show();
 	});
 }
 
@@ -240,7 +411,7 @@ function remapAnchorsFromPose(pose) {
 		}
 		a.behaviors();
 		a.update();
-		if (par.showAnchors) a.show();
+		if (par.drawAnchors) a.show();
 	});
 }
 
@@ -255,6 +426,35 @@ function retargetAnchorsFromPose(pose) {
 		}
 		a.behaviors();
 		a.update();
-		if (par.showAnchors) a.show();
+		if (par.drawAnchors) a.show();
 	});
+}
+
+function expandBlob(point, modifier=1) {
+	let px = point.position.x;
+	let py = point.position.y;
+	let x, y;
+	let newArr = [];
+
+	for (let a = 0; a < 360; a += par.angles) {
+		let xoff = map(cos(a + phase / modifier), -1, 1, 0, par.maxY / modifier);
+		let yoff = map(sin(a + phase / modifier), -1, 1, 0, par.maxX / modifier);
+
+		let n = noise(xoff, yoff, zoff);
+
+		let r = map(n, 0, 1, par.minRadius / modifier, par.maxRadius / modifier);
+
+		x = px + r * cos(a);
+		y = py + r * sin(a);
+
+		newArr.push([x, y]);
+	}
+	return newArr;
+}
+
+function topExpression(unsorted) {
+	let sorted = [];
+	sorted = Object.entries(unsorted);
+	sorted.sort((a, b) => b[1] - a[1]);
+	return sorted[0][0];
 }
