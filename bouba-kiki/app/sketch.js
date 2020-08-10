@@ -1,8 +1,16 @@
 // ;;scenes
 let sceneIndex = 0;
 let sceneCount = 2;
+let recLength = 2
 
 let canvas;
+
+let gifCapture = new CCapture( {
+	framerate: 60,
+	format: 'gif',
+	workersPath: './lib/',
+	verbose: true
+} );
 
 const PARTS = [
 	['nose', 0],
@@ -42,7 +50,9 @@ const SKELETON = [
 const anchors = [];
 
 function setup() {
-	canvas = createCanvas(windowWidth, windowHeight);
+	recorder = new P5Recorder({gifLength: 100});
+
+	createCanvas(windowWidth, windowHeight)
 	PARTS.forEach(p => {
 		anchors.push(new Anchor(width / 2, height / 2, p));
 	});
@@ -50,6 +60,11 @@ function setup() {
 
 // ;;scenes
 function draw() {
+
+	if (frameCount === 1) {
+		// canvas = document.getElementById('defaultCanvas0')
+		// gifCapture.start()
+	}
 	switch (sceneIndex % sceneCount) {
 		case 0:
 			softShape();
@@ -59,6 +74,12 @@ function draw() {
 		default:
 			break;
 	}
+	// gifCapture.capture(canvas)
+	if (frameCount === recLength) {
+		// gifCapture.stop()
+		// gifCapture.save()
+	}
+	recorder.capture(frameCount)
 }
 function mousePressed() {
 	sceneIndex++;
@@ -94,7 +115,7 @@ function sharpShape() {
 
 	// Draw hull outline
 	stroke(0);
-	strokeWeight(4);
+	strokeWeight(3);
 	noFill();
 	beginShape();
 	hullSet.forEach((p, i) => {
@@ -153,7 +174,7 @@ function softShape() {
 
 	// Draw hull outline
 	stroke(0);
-	strokeWeight(4);
+	strokeWeight(3);
 	noFill();
 	beginShape();
 	hullSet.forEach((p, i) => {
@@ -207,8 +228,8 @@ function remapPosenetPoint(p) {
 	let y = p.position.y;
 	// The recording was done on a 1280 video,
 	// but the pose is centered when mapping to 1000
-	let nX = map(x, 0, 1000, 0, canvas.width);
-	let nY = map(y, 0, 720, 0, canvas.height);
+	let nX = map(x, 0, 1000, 0, width);
+	let nY = map(y, 0, 720, 0, height);
 	return [nX, nY];
 }
 
