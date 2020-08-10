@@ -202,7 +202,7 @@ function softShape() {
 	endShape();
 
 	if (par.drawSkeleton) {
-		stroke('cyan');
+		stroke('blue');
 		strokeWeight(1);
 		remapSkeleton(skeleton);
 		noStroke();
