@@ -4,7 +4,7 @@ class Anchor {
 		this.target = createVector(x, y);
 		this.vel = p5.Vector.random2D();
 		this.acc = createVector();
-		this.referenceShapeRadius = 10;
+		this.referenceShapeRadius = 12;
 		this.part = part;
 		this.zoff = 0.0;
 		this.phase = 0.0;
@@ -12,7 +12,7 @@ class Anchor {
 		this.starYOff = 0.0;
 		this.seed1 = random(1000);
 		this.seed2 = random(1000);
-		this.seed3 = random(1000)
+		this.seed3 = random(1000);
 		this.topSpeed = par.topSpeed;
 		this.maxAcc = par.maxAcc;
 	}
@@ -27,8 +27,19 @@ class Anchor {
 		push();
 		noStroke();
 		fill('red');
-		ellipse(this.position.x, this.position.y, this.referenceShapeRadius);
-		// text(this.part,this.position.x,this.position.y)
+		let localRadius;
+		if (
+			this.part[0] === 'leftEye' ||
+			this.part[0] === 'rightEye' ||
+			this.part[0] === 'nose' ||
+			this.part[0] === 'leftEar' ||
+			this.part[0] === 'rightEar'
+		) {
+			localRadius = this.referenceShapeRadius;
+		} else {
+			localRadius = this.referenceShapeRadius * 0.8;
+		}
+		ellipse(this.position.x, this.position.y, localRadius);
 		pop();
 	}
 
@@ -109,26 +120,32 @@ class Anchor {
 		return newArr;
 	}
 
-	starify() {
+	starify(effect=1) {
 		let x = this.position.x;
 		let y = this.position.y;
 		let newArr = [];
 
 		let offStep = 0.01;
-		let radius1 = par.internalRadius
-		let radius2 = par.externalRadius
-		let npoints = par.starPoints
+		let radius1 = par.internalRadius * effect;
+		let radius2 = par.externalRadius * effect;
+		let npoints = par.starPoints;
 
 		push();
 		angleMode(RADIANS);
 		let angle = TWO_PI / npoints;
 		let halfAngle = angle / 2.0;
 		for (let a = 0; a < TWO_PI; a += angle) {
-			noiseSeed(this.seed2)
-			let sx = map(noise(this.starXOff, this.starYOff), 0, 1, -5, 5) + x + cos(a) * radius2;
+			noiseSeed(this.seed2);
+			let sx =
+				map(noise(this.starXOff, this.starYOff), 0, 1, -5, 5) +
+				x +
+				cos(a) * radius2;
 			// this.starXOff += offStep;
-			noiseSeed(this.seed3)
-			let sy = map(noise(this.starXOff, this.starYOff), 0, 1, -5, 5) + y + sin(a) * radius2;
+			noiseSeed(this.seed3);
+			let sy =
+				map(noise(this.starXOff, this.starYOff), 0, 1, -5, 5) +
+				y +
+				sin(a) * radius2;
 			// this.starYOff += offStep;
 			newArr.push([sx, sy]);
 			sx = x + cos(a + halfAngle) * radius1;

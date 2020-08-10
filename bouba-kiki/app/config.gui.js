@@ -25,16 +25,16 @@ class Paramaterize {
 		this.radius = 500;
 		this.maxZOff = 0.005
 		this.maxPhaseShift = 0.008
-		this.softConcavity = 100
-		this.sharpConcavity = 42
+		this.softConcavity = 140
+		this.sharpConcavity = 52
 		this.noiseOctaves = 8
 		this.noiseFalloff = .65	
 		this.starPoints = 8	
 		this.internalRadius = 25	
 		this.externalRadius = 55
-		this.padding = 50
+		this.padding = 80
 		this.drawAnchors = true;
-		this.drawExpandedBodyPoints = true
+		this.drawExpandedBodyPoints = false
 		this.drawSkeleton = true
 		this.drawCurves = true
 	}

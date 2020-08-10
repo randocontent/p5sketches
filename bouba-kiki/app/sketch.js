@@ -2,8 +2,8 @@
 let sceneIndex = 0;
 let sceneCount = 2;
 let recLength = 149;
-
-let recordedPose = recordedPose4
+let poseWidth = 0,
+	poseHeight = 0;
 
 let canvas;
 
@@ -54,8 +54,12 @@ const anchors = [];
 function setup() {
 	// recorder = new P5Recorder({gifLength: 100});
 
+	[poseWidth, poseHeight] = rangePoseHistory(recordedPose);
+	poseWidth = poseWidth + par.padding * 2;
+	poseHeight = poseHeight + par.padding * 2;
+
 	createCanvas(1280, 720);
-	background('white');
+	background(250);
 	PARTS.forEach(p => {
 		anchors.push(new Anchor(width / 2, height / 2, p));
 	});
@@ -67,10 +71,10 @@ function setup() {
 function draw() {
 	switch (sceneIndex % sceneCount) {
 		case 0:
-			softShape();
+			sharpShape();
 			break;
-			case 1:
-				sharpShape();
+		case 1:
+			softShape();
 		default:
 			break;
 	}
@@ -86,22 +90,30 @@ function mousePressed() {
 }
 
 function sharpShape() {
-	background('white');
+	background(250);
 	let i = frameCount % recordedPose.length;
-	let pose = recordedPose[i].pose.keypoints;
-	let skeleton = recordedPose[i].skeleton;
+	let pose;
+	let skeleton;
+	if (recordedPose[i]) {
+		pose = recordedPose[i].pose.keypoints;
+		skeleton = recordedPose[i].skeleton;
+	} else {
+		return;
+	}
 	remapAnchorsFromPose(pose);
 
 	expanded = [];
-	expanded = expanded.concat(anchors[0].starify());
-	expanded = expanded.concat(anchors[5].starify());
-	expanded = expanded.concat(anchors[6].starify());
+	expanded = expanded.concat(anchors[0].starify(2.5));
+	expanded = expanded.concat(anchors[3].starify());
+	expanded = expanded.concat(anchors[4].starify());
+	expanded = expanded.concat(anchors[5].starify(2));
+	expanded = expanded.concat(anchors[6].starify(2));
 	expanded = expanded.concat(anchors[7].starify());
 	expanded = expanded.concat(anchors[8].starify());
 	expanded = expanded.concat(anchors[9].starify());
 	expanded = expanded.concat(anchors[10].starify());
-	expanded = expanded.concat(anchors[11].starify());
-	expanded = expanded.concat(anchors[12].starify());
+	expanded = expanded.concat(anchors[11].starify(2));
+	expanded = expanded.concat(anchors[12].starify(2));
 	expanded = expanded.concat(anchors[13].starify());
 	expanded = expanded.concat(anchors[14].starify());
 	expanded = expanded.concat(anchors[15].starify());
@@ -127,13 +139,10 @@ function sharpShape() {
 		stroke('blue');
 		strokeWeight(1);
 		remapSkeleton(skeleton);
-		noStroke();
-		fill('red');
-		remapHead(pose);
 	}
 
 	if (par.drawExpandedBodyPoints) {
-		stroke('cyan');
+		stroke('red');
 		strokeWeight(3);
 		expanded.forEach(p => {
 			point(p[0], p[1]);
@@ -142,10 +151,16 @@ function sharpShape() {
 }
 
 function softShape() {
-	background('white');
+	background(250);
 	let i = frameCount % recordedPose.length;
-	let pose = recordedPose[i].pose.keypoints;
-	let skeleton = recordedPose[i].skeleton;
+	let pose;
+	let skeleton;
+	if (recordedPose[i]) {
+		pose = recordedPose[i].pose.keypoints;
+		skeleton = recordedPose[i].skeleton;
+	} else {
+		return;
+	}
 	remapAnchorsFromPose(pose);
 
 	expanded = [];
@@ -187,18 +202,18 @@ function softShape() {
 	endShape();
 
 	if (par.drawSkeleton) {
-		stroke('blue');
+		stroke('cyan');
 		strokeWeight(1);
 		remapSkeleton(skeleton);
 		noStroke();
 		fill('red');
-		remapHead(pose);
+		// remapHead(pose);
 	}
 
 	if (par.drawExpandedBodyPoints) {
-		stroke('cyan');
 		strokeWeight(3);
-		expanded.forEach(p => {
+		expanded.forEach((p, i) => {
+			stroke('green');
 			point(p[0], p[1]);
 		});
 	}
@@ -228,8 +243,8 @@ function remapPoint(p) {
 	let y = p.position.y;
 	// The recording was done on a 1280 video,
 	// but the pose is centered when mapping to 1000
-	let nX = map(x, 0, 1000, par.padding, width - par.padding);
-	let nY = map(y, 0, 720, par.padding, height - par.padding);
+	let nX = map(x, 0, poseWidth, par.padding, width - par.padding);
+	let nY = map(y, 0, poseHeight, par.padding, height - par.padding);
 	return [nX, nY];
 }
 
@@ -248,4 +263,29 @@ function remapAnchorsFromPose(pose) {
 		a.update();
 		if (par.drawAnchors) a.show();
 	});
+}
+
+function rangePose(pose) {
+	let topX = 0,
+		topY = 0;
+	pose.forEach(p => {
+		let x = p.position.x;
+		let y = p.position.y;
+		if (x > topX) topX = x;
+		if (y > topY) topY = y;
+	});
+	return [topX, topY];
+}
+
+function rangePoseHistory(poses) {
+	let topX = 0,
+		topY = 0;
+	poses.forEach(pose => {
+		if (pose) {
+			let [x, y] = rangePose(pose.pose.keypoints);
+			if (x > topX) topX = x;
+			if (y > topY) topY = y;
+		}
+	});
+	return [topX, topY];
 }
